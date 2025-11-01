@@ -136,12 +136,12 @@ This stage ensures that all data is structured and ready for analysis in Python 
 **Interactive Story:** [Divvy Chicago Bike Analysis — by Ivan Honchar](https://public.tableau.com/app/profile/ivan.honcahr/viz/DivvyChicagoBikeAnalysis/Story1)
 ### 📊 Key Visual Insights  
 #### 🏁 Key KPIs 
-![[Story 1 2.png]]
+![alt text](<Dashboard/Story 1.png>)
 - **Member users:** Higher speed, shorter trips, efficient commuting.  
 - **Casual users:** Slower pace, rides last **~28% longer**, emphasizing leisure.  
 - **Similarity:** Distance traveled nearly identical (<10% difference), confirming consistent trip scale across groups.
 #### 🕒 Temporal Trends  
-![[Story 2.png]]
+![alt text](<Dashboard/Story 2.png>)
 
 | Member Users | Casual Users |
 |---------------|---------------|
@@ -149,8 +149,8 @@ This stage ensures that all data is structured and ready for analysis in Python 
 | Minimal seasonal changes except weekends. | 4× higher summer activity vs winter. |
 | Weekday-focused, commuting-driven. | Weekend and holiday-focused, leisure-driven. |
 #### 🗺️ Spatial Distribution  
-![[Story 3.1.png]]
-![[Story 3.2.png]]
+![alt text](<Dashboard/Story 3.1.png>)
+![alt text](<Dashboard/Story 3.2.png>)
 
 | Member Users                                     | Casual Users                                                           |
 | ------------------------------------------------ | ---------------------------------------------------------------------- |
@@ -158,8 +158,8 @@ This stage ensures that all data is structured and ready for analysis in Python 
 | Balanced station popularity across zones.        | Sharp drop in usage with distance from the waterfront.                 |
 
 #### 🧭 Route Patterns  
-![[Story 4.1.png]]
-![[Story 4.2.png]]
+![alt text](<Dashboard/Story 4.1.png>)
+![alt text](<Dashboard/Story 4.2.png>)
 
 | Member Users | Casual Users |
 |---------------|---------------|
@@ -172,4 +172,3 @@ This stage ensures that all data is structured and ready for analysis in Python 
 | Stable usage both weekly and yearly. | Seasonal fluctuations, peaking in summer. |
 | Short, quick rides for transportation. | Long, slow rides for recreation. |
 | Interest areas: **residential and business zones**. | Interest areas: **tourist and waterfront zones**. |
-

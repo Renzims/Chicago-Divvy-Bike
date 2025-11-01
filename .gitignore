@@ -1,0 +1,15 @@
+# --- Jupyter Notebooks checkpoints ---
+.ipynb_checkpoints/
+
+# --- Divvy Bike data files ---
+*divvy-tripdata.csv
+routes_*.csv
+Data_Analysis.csv
+Tableau_Data.csv
+Boundaries_-_City_20250921.geojson
+
+# --- System & temporary files ---
+.DS_Store
+Thumbs.db
+*.tmp
+*.log

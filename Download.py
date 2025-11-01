@@ -3,6 +3,7 @@ import re
 import zipfile
 from pathlib import Path
 from urllib.parse import urljoin
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 from bs4 import BeautifulSoup
 from tqdm import tqdm
@@ -63,31 +64,37 @@ def extract_zip(zip_path: Path, out_dir: Path):
     try:
         with zipfile.ZipFile(zip_path, "r") as z:
             z.extractall(out_dir)
-        print(f"📦 Unpacked: {zip_path.name} → {out_dir}")
+        print(f"📦 Extracted: {zip_path.name} → {out_dir}")
     except zipfile.BadZipFile:
         print(f"⚠️ Corrupted archive: {zip_path.name}")
 
 
-def fetch_divvy(year_dir: Path, months: list[int] | None, overwrite: bool):
-    """Downloads all Divvy files for the year and unzips ZIP files"""
+def fetch_divvy(out_dir: Path, months: list[int] | None, overwrite: bool, workers: int = 4):
     urls = list_divvy_year_files(DIVVY_INDEX)
     if months:
         urls = [u for u in urls if int(re.search(rf"{YEAR}(\d{{2}})", u).group(1)) in months]
 
     print(f"Found Divvy files for {YEAR}: {len(urls)}\n")
 
-    for url in urls:
+    def _job(url: str):
         file_name = url.split("/")[-1]
-        dest = year_dir / file_name
+        dest = out_dir / file_name
         file_path = download_file(url, dest, overwrite=overwrite)
-
-        # если это ZIP — распакуем
         if file_path.suffix.lower() == ".zip":
-            extract_zip(file_path, year_dir)
+            extract_zip(file_path, out_dir)
+        return file_name
+
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        futures = {ex.submit(_job, u): u for u in urls}
+        for fut in as_completed(futures):
+            try:
+                fut.result()
+            except Exception as e:
+                print(f"⚠️ Error downloading {futures[fut]}: {e}")
 
 
-def fetch_city_geojson(external_dir: Path, overwrite: bool):
-    out = external_dir / "Boundaries_City_Chicago.geojson"
+def fetch_city_geojson(out_dir: Path, overwrite: bool):
+    out = out_dir / "Boundaries_City_Chicago.geojson"
     if out.exists() and not overwrite:
         print(f"✔ GeoJSON already downloaded: {out.name}")
         return
@@ -114,27 +121,30 @@ def parse_months_arg(arg: str | None) -> list[int] | None:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Downloads Divvy 2024 and GeoJSON for the city of Chicago (without creating folders)")
-    ap.add_argument("--raw", default="data/raw/2024", help="Folder for Divvy CSV/ZIP files")
-    ap.add_argument("--external", default="data/external", help="Folder for GeoJSON")
-    ap.add_argument("--months", default="", help="Months (e.g. '1-3' or '1,7,12')")
+    ap = argparse.ArgumentParser(description="Downloads Divvy 2024 and Chicago GeoJSON simultaneously into one folder")
+    ap.add_argument("--out", default="data", help="Common folder for all files (default: data)")
+    ap.add_argument("--months", default="", help="Limit months: '1-3' or '1,7,12'")
     ap.add_argument("--overwrite", action="store_true", help="Overwrite existing files")
+    ap.add_argument("--workers", type=int, default=4, help="Number of simultaneous Divvy downloads (default 4)")
     args = ap.parse_args()
 
-    raw_dir = Path(args.raw).resolve()
-    external_dir = Path(args.external).resolve()
-
-    if not raw_dir.exists() or not external_dir.exists():
-        print(f"❌ Error: One of the folders was not found.\n"
-              f"Make sure the following exist:\n  {raw_dir}\n  {external_dir}")
+    out_dir = Path(args.out).resolve()
+    if not out_dir.exists():
+        print(f"❌ Error: folder {out_dir} not found. Please create it manually.")
         return
 
     months = parse_months_arg(args.months)
-    fetch_divvy(raw_dir, months, overwrite=args.overwrite)
-    fetch_city_geojson(external_dir, overwrite=args.overwrite)
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        fut_divvy = ex.submit(fetch_divvy, out_dir, months, args.overwrite, args.workers)
+        fut_geo = ex.submit(fetch_city_geojson, out_dir, args.overwrite)
+        fut_divvy.result()
+        fut_geo.result()
 
-    print("\n✅ All files successfully downloaded and extracted.")
-
+    print("\n✅ All files (Divvy 2024 and GeoJSON) downloaded and saved in one folder.")
+    print(f"📁 Folder: {out_dir}")
+    print(f"📅 Months: {months if months else 'All'}")
+    print(f"🔄 Overwrite: {'Yes' if args.overwrite else 'No'}")
+    print(f"👥 Workers: {args.workers}")
 
 if __name__ == "__main__":
     main()
